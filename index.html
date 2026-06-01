@@ -447,6 +447,10 @@
     <span id="char-count"></span>
     <div id="autosave-badge"></div>
     <button class="ts-btn" id="ts-insert-btn" onclick="insertTimestamp()" disabled>＋[<span id="ts-preview">00:00</span>]</button>
+    <div style="display:flex;align-items:center;gap:4px;margin-right:4px;">
+      <button class="btn" onclick="changeFontSize(-1)" style="padding:5px 9px;font-size:13px;line-height:1;" title="文字を小さく">A-</button>
+      <button class="btn" onclick="changeFontSize(1)"  style="padding:5px 9px;font-size:13px;line-height:1;" title="文字を大きく">A+</button>
+    </div>
     <button class="btn" id="editor-save-btn" onclick="manualSave()" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
     <button class="btn" onclick="closeEditor()" style="padding:5px 12px;font-size:12px;">✕</button>
   </div>
@@ -966,12 +970,22 @@ window.addEventListener('beforeunload', e => {
 //  EDITOR OPEN / CLOSE
 // ══════════════════════════════════════════════════════
 function openEditor() {
+  const saved = localStorage.getItem('editorFontSize');
+  if (saved) document.getElementById('main-editor').style.fontSize = saved + 'px';
   if (!state.textLoaded) return;
   document.getElementById('editor-screen').classList.add('open');
   // ── 高速化ポイント③: 開くときは value を再代入しない
   //    （ta.value は loadTextContent 以降ずっと生きている）
   setBadge(state.saveStatus);
   ta.focus();
+}
+
+function changeFontSize(delta) {
+  const editor = document.getElementById('main-editor');
+  const current = parseFloat(getComputedStyle(editor).fontSize);
+  const next = Math.min(Math.max(current + delta * 2, 10), 32);
+  editor.style.fontSize = next + 'px';
+  localStorage.setItem('editorFontSize', next);
 }
 
 function closeEditor() {
