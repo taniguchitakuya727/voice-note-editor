@@ -671,14 +671,34 @@ function showGASDialog(files, onSelect) {
   overlay = document.createElement('div');
   overlay.id = 'gas-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:flex-end;justify-content:center;animation:fadeUp .2s ease;';
-  overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 16px 40px;">
-      <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px;letter-spacing:.08em;">GOOGLE DRIVE のファイルを選択</div>
-      ${files.map(f => `<button onclick="window._gasSelect(${JSON.stringify(f)})" style="display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);cursor:pointer;">📄 ${f}</button>`).join('')}
-      <button onclick="document.getElementById('gas-overlay').remove()" style="display:block;width:100%;padding:11px;margin-top:8px;background:transparent;border:1px solid var(--border);border-radius:8px;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">キャンセル</button>
-    </div>`;
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 16px 40px;';
+
+  const label = document.createElement('div');
+  label.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px;letter-spacing:.08em;';
+  label.textContent = 'GOOGLE DRIVE のファイルを選択';
+  sheet.appendChild(label);
+
+  files.forEach(f => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);cursor:pointer;';
+    btn.textContent = '📄 ' + f;
+    btn.addEventListener('click', () => {
+      overlay.remove();
+      if (onSelect) onSelect(f);
+    });
+    sheet.appendChild(btn);
+  });
+
+  const cancel = document.createElement('button');
+  cancel.style.cssText = 'display:block;width:100%;padding:11px;margin-top:8px;background:transparent;border:1px solid var(--border);border-radius:8px;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;';
+  cancel.textContent = 'キャンセル';
+  cancel.addEventListener('click', () => overlay.remove());
+  sheet.appendChild(cancel);
+
+  overlay.appendChild(sheet);
   document.body.appendChild(overlay);
-  window._gasSelect = (filename) => { overlay.remove(); if (onSelect) onSelect(filename); };
 }
 
 function loadTextContent(text, name) {
