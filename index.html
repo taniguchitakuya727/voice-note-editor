@@ -443,14 +443,12 @@
 
   <!-- Toolbar -->
   <div class="editor-toolbar">
-    <div class="editor-fname" id="editor-filename">未選択</div>
-    <span id="char-count"></span>
+    <div class="editor-fname" id="editor-filename" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未選択</div>
+    <span id="char-count" style="display:none"></span>
     <div id="autosave-badge"></div>
-    <button class="ts-btn" id="ts-insert-btn" onclick="insertTimestamp()" disabled>＋[<span id="ts-preview">00:00</span>]</button>
-    <div style="display:flex;align-items:center;gap:4px;margin-right:4px;">
-      <button class="btn" onclick="changeFontSize(-1)" style="padding:5px 9px;font-size:13px;line-height:1;" title="文字を小さく">A-</button>
-      <button class="btn" onclick="changeFontSize(1)"  style="padding:5px 9px;font-size:13px;line-height:1;" title="文字を大きく">A+</button>
-    </div>
+    <button class="ts-btn" id="ts-insert-btn" style="display:none" onclick="insertTimestamp()" disabled>＋[<span id="ts-preview">00:00</span>]</button>
+    <button class="btn" onclick="changeFontSize(-1)" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
+    <button class="btn" onclick="changeFontSize(1)"  style="padding:5px 9px;font-size:13px;line-height:1;">A+</button>
     <button class="btn" id="editor-save-btn" onclick="manualSave()" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
     <button class="btn" onclick="closeEditor()" style="padding:5px 12px;font-size:12px;">✕</button>
   </div>
