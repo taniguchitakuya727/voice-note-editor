@@ -473,7 +473,7 @@
 //  STATE
 // ══════════════════════════════════════════════════════
 // ── GAS API ──────────────────────────────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFG__C_PG7P-p1Io-uIePpwN4UWE8Y8aGkJwZ6C8FGA5lwamvRwzi7BenMY5pYlBeJNQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxd6o-9ZA6daFr1jgwc4Tusv16J8NLCWIqKaPy_yFEa7S1cirgtuU0wWCIJiWWtty2z/exec';
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 const state = {
@@ -608,16 +608,32 @@ async function openText() {
   input.click();
 }
 
+// ── GASへのリクエスト（URLパラメータ経由でGETに変換）
+function gasRequest(params) {
+  return new Promise((resolve, reject) => {
+    const url = GAS_URL + '?' + Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    const tid = setTimeout(() => {
+      document.body.removeChild(iframe);
+      reject(new Error('タイムアウト'));
+    }, 15000);
+    window._gasCallback = (data) => {
+      clearTimeout(tid);
+      document.body.removeChild(iframe);
+      resolve(data);
+    };
+    iframe.src = url + '&callback=_gasCallback';
+    document.body.appendChild(iframe);
+  });
+}
+
 // ── GAS経由でファイル一覧を取得して選択
 async function openTextFromGAS() {
   const btn = document.getElementById('open-text-btn');
   if (btn) { btn.disabled = true; btn.textContent = '読込中…'; }
   try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'list' }),
-    });
-    const data = await res.json();
+    const data = await gasRequest({ action: 'list' });
     if (btn) { btn.disabled = false; btn.textContent = '開く'; }
     showGASDialog(data.files && data.files.length ? data.files : ['（ファイルなし）'], data.files && data.files.length ? async (f) => loadFromGAS(f) : null);
   } catch(e) {
@@ -630,11 +646,7 @@ async function loadFromGAS(filename) {
   const msg = document.getElementById('save-msg');
   msg.textContent = '読込中…'; msg.className = 'save-msg';
   try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'read', filename }),
-    });
-    const data = await res.json();
+    const data = await gasRequest({ action: 'read', filename });
     state.gasMode = true;
     state.textFileHandle = null;
     loadTextContent(data.text || '', filename);
@@ -729,11 +741,7 @@ function updateCharCount(text) {
 async function _writeFile(text) {
   if (state.gasMode) {
     // GAS経由で上書き保存（iPhone用）
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'write', filename: state.fileName, text }),
-    });
-    const data = await res.json();
+    const data = await gasRequest({ action: 'write', filename: state.fileName, text });
     if (!data.saved) throw new Error('GAS保存失敗');
   } else if (state.textFileHandle) {
     // File System Access API: 直接上書き（PC Chrome用）
