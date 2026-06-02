@@ -367,19 +367,19 @@
   <div id="audio-strip">
     <div class="audio-row1">
       <div class="audio-fname" id="audio-filename">未選択</div>
-      <button class="btn btn-accent" onclick="openAudio()">音声を開く</button>
+      <button class="btn btn-accent">音声を開く</button>
     </div>
     <div class="audio-row2">
-      <button class="btn" style="padding:6px 10px;" id="skip-back-btn" onclick="skipAudio(-10)" disabled>⏪ 10</button>
-      <button class="play-btn" id="play-btn" onclick="togglePlay()" disabled>
+      <button class="btn" style="padding:6px 10px;" id="skip-back-btn" disabled>⏪ 10</button>
+      <button class="play-btn" id="play-btn" disabled>
         <svg id="play-icon" viewBox="0 0 16 16" fill="currentColor"><polygon points="4,2 14,8 4,14"/></svg>
       </button>
-      <button class="btn" style="padding:6px 10px;" id="skip-fwd-btn" onclick="skipAudio(10)" disabled>10 ⏩</button>
+      <button class="btn" style="padding:6px 10px;" id="skip-fwd-btn" disabled>10 ⏩</button>
       <div class="speed-pills" style="margin-left:4px;">
-        <button class="speed-pill active" data-speed="1.0"  onclick="setSpeed(1.0)">1×</button>
-        <button class="speed-pill"        data-speed="1.25" onclick="setSpeed(1.25)">1.25×</button>
-        <button class="speed-pill"        data-speed="1.5"  onclick="setSpeed(1.5)">1.5×</button>
-        <button class="speed-pill"        data-speed="2.0"  onclick="setSpeed(2.0)">2×</button>
+        <button class="speed-pill active" data-speed="1.0" >1×</button>
+        <button class="speed-pill"        data-speed="1.25">1.25×</button>
+        <button class="speed-pill"        data-speed="1.5" >1.5×</button>
+        <button class="speed-pill"        data-speed="2.0" >2×</button>
       </div>
     </div>
     <div class="seek-wrap">
@@ -399,19 +399,19 @@
 
     <div class="text-row">
       <div class="text-fname" id="text-filename">未選択</div>
-      <button class="btn btn-accent" id="open-text-btn" onclick="openText()">開く</button>
-      <button class="btn" id="edit-btn" onclick="openEditor()" disabled>編集</button>
-      <button class="btn" id="save-btn" onclick="manualSave()" disabled>保存</button>
+      <button class="btn btn-accent" id="open-text-btn">開く</button>
+      <button class="btn" id="edit-btn" disabled>編集</button>
+      <button class="btn" id="save-btn" disabled>保存</button>
     </div>
     <!-- 下書き復元バナー -->
     <div id="draft-banner" class="hidden">
       <span class="draft-msg">⚡ 未保存の下書きがあります</span>
       <span class="draft-time" id="draft-time"></span>
-      <button class="btn" style="padding:4px 10px;font-size:11px;color:var(--accent);border-color:rgba(240,160,48,.4);" onclick="restoreDraft()">復元</button>
-      <button class="btn" style="padding:4px 10px;font-size:11px;" onclick="discardDraft()">破棄</button>
+      <button class="btn" style="padding:4px 10px;font-size:11px;color:var(--accent);border-color:rgba(240,160,48,.4);">復元</button>
+      <button class="btn" style="padding:4px 10px;font-size:11px;">破棄</button>
     </div>
 
-    <div id="text-preview" onclick="if(state.textLoaded) openEditor()">
+    <div id="text-preview">
       <span class="preview-empty">テキストファイルを開いてください</span>
     </div>
     <div class="save-msg" id="save-msg"></div>
@@ -424,17 +424,17 @@
   <div class="mini-player">
     <div class="mini-row1">
       <div class="mini-fname" id="mini-audio-filename">音声未選択</div>
-      <button class="btn" style="padding:4px 8px;font-size:11px;" id="mini-skip-back" onclick="skipAudio(-10)" disabled>⏪</button>
-      <button class="play-btn" style="width:28px;height:28px;" id="mini-play-btn" onclick="togglePlay()" disabled>
+      <button class="btn" style="padding:4px 8px;font-size:11px;" id="mini-skip-back" disabled>⏪</button>
+      <button class="play-btn" style="width:28px;height:28px;" id="mini-play-btn" disabled>
         <svg id="mini-play-icon" viewBox="0 0 16 16" fill="currentColor" style="width:11px;height:11px;"><polygon points="4,2 14,8 4,14"/></svg>
       </button>
-      <button class="btn" style="padding:4px 8px;font-size:11px;" id="mini-skip-fwd" onclick="skipAudio(10)" disabled>⏩</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;" id="mini-skip-fwd" disabled>⏩</button>
       <span class="mini-time"><span id="mini-current">00:00</span> / <span id="mini-total">00:00</span></span>
       <div class="mini-speed">
-        <button class="mini-speed-pill active" data-speed="1.0"  onclick="setSpeed(1.0)">1×</button>
-        <button class="mini-speed-pill"        data-speed="1.25" onclick="setSpeed(1.25)">1.25×</button>
-        <button class="mini-speed-pill"        data-speed="1.5"  onclick="setSpeed(1.5)">1.5×</button>
-        <button class="mini-speed-pill"        data-speed="2.0"  onclick="setSpeed(2.0)">2×</button>
+        <button class="mini-speed-pill active" data-speed="1.0" >1×</button>
+        <button class="mini-speed-pill"        data-speed="1.25">1.25×</button>
+        <button class="mini-speed-pill"        data-speed="1.5" >1.5×</button>
+        <button class="mini-speed-pill"        data-speed="2.0" >2×</button>
       </div>
     </div>
     <input type="range" id="mini-seek-bar" min="0" max="100" value="0" step="0.1"
@@ -446,11 +446,11 @@
     <div class="editor-fname" id="editor-filename" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未選択</div>
     <span id="char-count" style="display:none"></span>
     <div id="autosave-badge"></div>
-    <button class="ts-btn" id="ts-insert-btn" style="display:none" onclick="insertTimestamp()" disabled>＋[<span id="ts-preview">00:00</span>]</button>
-    <button class="btn" onclick="changeFontSize(-1)" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
-    <button class="btn" onclick="changeFontSize(1)"  style="padding:5px 9px;font-size:13px;line-height:1;">A+</button>
-    <button class="btn" id="editor-save-btn" onclick="manualSave()" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
-    <button class="btn" onclick="closeEditor()" style="padding:5px 12px;font-size:12px;">✕</button>
+    <button class="ts-btn" id="ts-insert-btn" style="display:none" disabled>＋[<span id="ts-preview">00:00</span>]</button>
+    <button class="btn" id="font-decrease-btn" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
+    <button class="btn" id="font-increase-btn"  style="padding:5px 9px;font-size:13px;line-height:1;">A+</button>
+    <button class="btn" id="editor-save-btn" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
+    <button class="btn" style="padding:5px 12px;font-size:12px;"id="editor-close-btn">✕</button>
   </div>
 
   <!-- Textarea -->
@@ -1126,7 +1126,34 @@ function escHtml(s) {
 }
 
 // ページ読み込み時に実行
-document.addEventListener('DOMContentLoaded', scanDraftsOnStartup);
+document.addEventListener('DOMContentLoaded', () => {
+  scanDraftsOnStartup();
+  // ── ボタンイベント登録（CSP対策）
+  const evMap = {
+    'open-audio-btn':    () => openAudio(),
+    'skip-back-btn':     () => skipAudio(-10),
+    'play-btn':          () => togglePlay(),
+    'skip-fwd-btn':      () => skipAudio(10),
+    'open-text-btn':     () => openText(),
+    'edit-btn':          () => openEditor(),
+    'save-btn':          () => manualSave(),
+    'editor-save-btn':   () => manualSave(),
+    'ts-insert-btn':     () => insertTimestamp(),
+    'font-decrease-btn': () => changeFontSize(-1),
+    'font-increase-btn': () => changeFontSize(1),
+    'restore-draft-btn': () => restoreDraft(),
+    'discard-draft-btn': () => discardDraft(),
+    'editor-close-btn':  () => closeEditor(),
+    'text-preview':      () => { if(state.textLoaded) openEditor(); },
+  };
+  Object.entries(evMap).forEach(([id, fn]) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', fn);
+  });
+  document.querySelectorAll('[data-speed]').forEach(el => {
+    el.addEventListener('click', () => setSpeed(parseFloat(el.dataset.speed)));
+  });
+});
 
 // ══════════════════════════════════════════════════════
 //  UTILS
