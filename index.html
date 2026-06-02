@@ -806,10 +806,12 @@ async function autosave() {
 }
 
 async function manualSave() {
-  if (!state.textLoaded) return;
-  clearTimeout(state.autosaveTimer); // 手動保存したらデバウンスキャンセル
+  if (!state.textLoaded && !state.gasMode) return;
+  clearTimeout(state.autosaveTimer);
   const text = ta.value;
   setBadge('saving');
+  const msg = document.getElementById('save-msg');
+  msg.textContent = '保存中…'; msg.className = 'save-msg';
   try {
     await _writeFile(text);
     state.textContent = text;
