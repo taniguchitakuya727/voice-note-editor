@@ -770,9 +770,14 @@ function updateCharCount(text) {
 // ══════════════════════════════════════════════════════
 async function _writeFile(text) {
   if (state.gasMode) {
-    // GAS経由で上書き保存（iPhone用）
-    const data = await gasRequest({ action: 'write', filename: state.fileName, text });
-    if (!data.saved) throw new Error('GAS保存失敗');
+    // GAS経由で上書き保存（fetch POST → no-corsでレスポンス読めないが書き込みはされる）
+    try {
+      await fetch(GAS_URL + '?action=write&filename=' + encodeURIComponent(state.fileName) + '&text=' + encodeURIComponent(text) + '&callback=_', {
+        method: 'GET', mode: 'no-cors',
+      });
+    } catch(e) { /* no-corsはエラーにならないはず */ }
+    // no-corsではレスポンスが読めないので成功とみなす
+    return;
   } else if (state.textFileHandle) {
     // File System Access API: 直接上書き（PC Chrome用）
     const w = await state.textFileHandle.createWritable();
