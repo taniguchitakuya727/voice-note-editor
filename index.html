@@ -475,7 +475,7 @@
 //  STATE
 // ══════════════════════════════════════════════════════
 // ── GAS API ──────────────────────────────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxd6o-9ZA6daFr1jgwc4Tusv16J8NLCWIqKaPy_yFEa7S1cirgtuU0wWCIJiWWtty2z/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxfrcnxw_antSsrvq7RZ_NaZqX8eHPWH128odFs6OcJy2C6wwFI2ogj2T-D86VNPeB4HQ/exec';
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 const state = {
@@ -770,13 +770,14 @@ function updateCharCount(text) {
 // ══════════════════════════════════════════════════════
 async function _writeFile(text) {
   if (state.gasMode) {
-    // GAS経由で上書き保存（fetch POST → no-corsでレスポンス読めないが書き込みはされる）
-    try {
-      await fetch(GAS_URL + '?action=write&filename=' + encodeURIComponent(state.fileName) + '&text=' + encodeURIComponent(text) + '&callback=_', {
-        method: 'GET', mode: 'no-cors',
-      });
-    } catch(e) { /* no-corsはエラーにならないはず */ }
-    // no-corsではレスポンスが読めないので成功とみなす
+    // GAS経由で上書き保存（POST fetch）
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'write', filename: state.fileName, text }),
+    });
+    const data = await res.json();
+    if (!data.saved) throw new Error('GAS保存失敗');
     return;
   } else if (state.textFileHandle) {
     // File System Access API: 直接上書き（PC Chrome用）
