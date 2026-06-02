@@ -1065,12 +1065,12 @@ function scanDraftsOnStartup() {
           &nbsp;·&nbsp; ${chars} 文字
         </div>
       </div>
-      <button class="btn" style="padding:4px 10px;font-size:11px;color:var(--accent);border-color:rgba(240,160,48,.4);"
-        onclick="restoreFromStartup(${JSON.stringify(d.key)})">復元</button>
-      <button class="btn" style="padding:4px 10px;font-size:11px;"
-        onclick="deleteFromStartup(${JSON.stringify(d.key)}, this)">削除</button>
+      <button class="btn draft-restore-btn" style="padding:4px 10px;font-size:11px;color:var(--accent);border-color:rgba(240,160,48,.4);">復元</button>
+      <button class="btn draft-delete-btn" style="padding:4px 10px;font-size:11px;">削除</button>
     `;
     banner.appendChild(item);
+    item.querySelector('.draft-restore-btn').addEventListener('click', () => restoreFromStartup(d.key));
+    item.querySelector('.draft-delete-btn').addEventListener('click', function() { deleteFromStartup(d.key, this); });
   });
 }
 
