@@ -317,26 +317,14 @@
   }
 
   .draft-item-icon { font-size: 14px; flex-shrink: 0; }
-
   .draft-item-info { flex: 1; min-width: 0; }
-
   .draft-item-name {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-
-  .draft-item-meta {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-
+  .draft-item-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 1px; }
   .draft-item-meta .accent { color: var(--accent); }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -433,8 +421,8 @@
 
   <!-- Toolbar -->
   <div class="editor-toolbar">
-    <div class="editor-fname" id="editor-filename" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未選択</div>
-    <span id="char-count" style="display:none"></span>
+    <div class="editor-fname" id="editor-filename">未選択</div>
+    <span id="char-count"></span>
     <div id="autosave-badge"></div>
     <button class="ts-btn" id="ts-insert-btn" style="display:none" disabled>＋[<span id="ts-preview">00:00</span>]</button>
     <button class="btn" id="font-decrease-btn" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
@@ -464,7 +452,12 @@
 // ══════════════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxfrcnxw_antSsrvq7RZ_NaZqX8eHPWH128odFs6OcJy2C6wwFI2ogj2T-D86VNPeB4HQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxd6o-9ZA6daFr1jgwc4Tusv16J8NLCWIqKaPy_yFEa7S1cirgtuU0wWCIJiWWtty2z/exec';
+
+// チャンクサイズ: 日本語1文字=3バイトでencodeされるため
+// URL上限8KBを考慮し、600文字単位で分割
+const CHUNK_SIZE = 600;
+
 const IS_IOS = (() => {
   try {
     return /iP(hone|ad|od)/.test(navigator.userAgent) ||
@@ -609,7 +602,7 @@ async function openText() {
 // ── GASへのリクエスト（scriptタグJSONP方式）
 function gasRequest(params) {
   return new Promise((resolve, reject) => {
-    const cbName = '_gasCb_' + Date.now();
+    const cbName = '_gasCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const url = GAS_URL + '?' +
       Object.entries(params)
         .map(([k, v]) => k + '=' + encodeURIComponent(v))
@@ -619,7 +612,7 @@ function gasRequest(params) {
     const tid = setTimeout(() => {
       cleanup();
       reject(new Error('タイムアウト'));
-    }, 15000);
+    }, 20000);
     function cleanup() {
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
@@ -630,6 +623,42 @@ function gasRequest(params) {
     script.src = url;
     document.head.appendChild(script);
   });
+}
+
+// ── チャンク分割してGASに保存
+async function gasWriteChunked(filename, text) {
+  // テキストを CHUNK_SIZE 文字ずつ分割
+  const chunks = [];
+  for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+    chunks.push(text.slice(i, i + CHUNK_SIZE));
+  }
+  const total = chunks.length;
+
+  // 1チャンクだけなら通常のwriteで保存（高速）
+  if (total === 1) {
+    const data = await gasRequest({ action: 'write', filename, text: chunks[0] });
+    if (!data.saved) throw new Error('GAS保存失敗');
+    return;
+  }
+
+  // 複数チャンク: 順番に送信
+  const msg = document.getElementById('save-msg');
+  for (let i = 0; i < total; i++) {
+    if (msg) {
+      msg.textContent = `保存中… ${i + 1}/${total}`;
+      msg.className = 'save-msg';
+    }
+    const data = await gasRequest({
+      action:  'chunk',
+      filename,
+      index:   i,
+      total,
+      chunk:   chunks[i],
+    });
+    if (i === total - 1 && !data.saved) {
+      throw new Error('GASチャンク結合失敗');
+    }
+  }
 }
 
 // ── GAS経由でファイル一覧を取得して選択
@@ -717,7 +746,10 @@ function loadTextContent(text, name) {
   ['edit-btn','save-btn','editor-save-btn'].forEach(id =>
     document.getElementById(id).disabled = false);
 
-  updateCharCount(text);
+  // 文字数を表示
+  const cc = document.getElementById('char-count');
+  if (cc) { cc.textContent = fmtChars(text.length); cc.style.display = ''; }
+
   setBadge('saved');
   document.getElementById('save-msg').textContent = '';
   checkDraftOnLoad(name);
@@ -732,7 +764,10 @@ ta.addEventListener('input', () => {
   if (state.saveStatus !== 'dirty') setBadge('dirty');
 
   clearTimeout(_charCountTimer);
-  _charCountTimer = setTimeout(() => updateCharCount(ta.value), 300);
+  _charCountTimer = setTimeout(() => {
+    const cc = document.getElementById('char-count');
+    if (cc) cc.textContent = fmtChars(ta.value.length);
+  }, 300);
 
   clearTimeout(state.draftTimer);
   state.draftTimer = setTimeout(() => saveDraftLocal(ta.value), 2000);
@@ -745,10 +780,8 @@ function scheduleAutosave() {
   state.autosaveTimer = setTimeout(() => autosave(), 5000);
 }
 
-function updateCharCount(text) {
-  const n = text.length;
-  const k = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
-  document.getElementById('char-count').textContent = k + ' 文字';
+function fmtChars(n) {
+  return n >= 1000 ? (n / 1000).toFixed(1) + 'k 文字' : n + ' 文字';
 }
 
 // ══════════════════════════════════════════════════════
@@ -756,22 +789,15 @@ function updateCharCount(text) {
 // ══════════════════════════════════════════════════════
 async function _writeFile(text) {
   if (state.gasMode) {
-    // ✅ JSONP方式で保存（iOSのCORSブロック回避）
-    const data = await gasRequest({
-      action:   'write',
-      filename: state.fileName,
-      text:     text,
-    });
-    if (!data.saved) throw new Error('GAS保存失敗');
+    // ✅ チャンク分割JSONP方式（URL長制限を回避）
+    await gasWriteChunked(state.fileName, text);
     return;
   }
   if (state.textFileHandle) {
-    // File System Access API: 直接上書き（PC Chrome用）
     const w = await state.textFileHandle.createWritable();
     await w.write(text);
     await w.close();
   } else {
-    // フォールバック: ダウンロード
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     a.download = state.fileName || 'output.txt';
@@ -851,7 +877,8 @@ function checkDraftOnLoad(name) {
 function restoreDraft() {
   if (!state._pendingDraft) return;
   ta.value = state._pendingDraft;
-  updateCharCount(state._pendingDraft);
+  const cc = document.getElementById('char-count');
+  if (cc) cc.textContent = fmtChars(state._pendingDraft.length);
   renderPreview(state._pendingDraft);
   setBadge('dirty');
   hideDraftBanner();
@@ -1003,9 +1030,6 @@ function scanDraftsOnStartup() {
   banner.classList.add('visible');
 
   drafts.forEach(d => {
-    const chars = d.text.length >= 1000
-      ? (d.text.length / 1000).toFixed(1) + 'k'
-      : d.text.length;
     const item = document.createElement('div');
     item.className = 'draft-item';
     item.innerHTML = `
@@ -1014,7 +1038,7 @@ function scanDraftsOnStartup() {
         <div class="draft-item-name">${escHtml(d.name)}</div>
         <div class="draft-item-meta">
           <span class="accent">${fmtAgo(d.savedAt)}前</span>
-          &nbsp;·&nbsp; ${chars} 文字
+          &nbsp;·&nbsp; ${fmtChars(d.text.length)}
         </div>
       </div>
       <button class="btn draft-restore-btn" style="padding:4px 10px;font-size:11px;color:var(--accent);border-color:rgba(240,160,48,.4);">復元</button>
@@ -1046,7 +1070,8 @@ function restoreFromStartup(key) {
 
     ta.value = d.text;
     renderPreview(d.text);
-    updateCharCount(d.text);
+    const cc = document.getElementById('char-count');
+    if (cc) { cc.textContent = fmtChars(d.text.length); cc.style.display = ''; }
     ['edit-btn','save-btn','editor-save-btn'].forEach(id =>
       document.getElementById(id).disabled = false);
     setBadge('dirty');
