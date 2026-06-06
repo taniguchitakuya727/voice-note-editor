@@ -707,6 +707,11 @@ function showGASDialog(files, onSelect) {
 }
 
 function loadTextContent(text, name) {
+  // 新規ファイル（前回と別ファイル）の場合はカーソル位置をリセット
+  if (name !== state.fileName) {
+    // 前のファイルのカーソル位置は保存しない（closeEditor時に保存済みのはず）
+    // 新しいファイルは先頭から（localStorage未登録なら0）
+  }
   state.textContent = text;
   state.fileName = name;
   state.textLoaded = true;
@@ -983,10 +988,20 @@ function openEditor() {
   if (saved) document.getElementById('main-editor').style.fontSize = saved + 'px';
   if (!state.textLoaded) return;
   document.getElementById('editor-screen').classList.add('open');
-  // ── 高速化ポイント③: 開くときは value を再代入しない
-  //    （ta.value は loadTextContent 以降ずっと生きている）
   setBadge(state.saveStatus);
+  // カーソル位置を復元
+  const posKey = 'cursorPos:' + state.fileName;
+  const savedPos = parseInt(localStorage.getItem(posKey) || '0', 10);
+  const pos = Math.min(savedPos, ta.value.length);
   ta.focus();
+  requestAnimationFrame(() => {
+    ta.setSelectionRange(pos, pos);
+    // カーソル位置が見えるようにスクロール
+    const lineHeight = parseFloat(getComputedStyle(ta).lineHeight);
+    const lines = ta.value.substring(0, pos).split('
+').length;
+    ta.scrollTop = Math.max(0, (lines - 3) * lineHeight);
+  });
 }
 
 function changeFontSize(delta) {
@@ -998,6 +1013,10 @@ function changeFontSize(delta) {
 }
 
 function closeEditor() {
+  // カーソル位置を保存
+  if (state.fileName) {
+    localStorage.setItem('cursorPos:' + state.fileName, ta.selectionStart);
+  }
   // プレビュー更新（スライスのみ = 高速）
   renderPreview(ta.value);
   state.textContent = ta.value; // dirty チェック用に同期
