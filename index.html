@@ -174,6 +174,7 @@
     display: none; position: fixed; inset: 0;
     background: var(--bg); flex-direction: column;
     z-index: 200; animation: fadeUp .18s ease;
+    padding-top: 72px; /* ミニプレイヤーの高さ分 */
   }
   #editor-screen.open { display: flex; }
   @keyframes fadeUp {
@@ -183,10 +184,12 @@
 
   /* Mini player */
   .mini-player {
-    flex-shrink: 0; background: var(--surface);
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
     padding: 8px 14px 6px;
     display: flex; flex-direction: column; gap: 6px;
+    z-index: 300;
   }
   .mini-row1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .mini-fname {
