@@ -174,7 +174,7 @@
     display: none; position: fixed; inset: 0;
     background: var(--bg); flex-direction: column;
     z-index: 200; animation: fadeUp .18s ease;
-    padding-top: 72px; /* ミニプレイヤーの高さ分 */
+    padding-top: 72px;
   }
   #editor-screen.open { display: flex; }
   @keyframes fadeUp {
@@ -225,7 +225,7 @@
     border: 1px solid transparent;
     transition: all .3s;
     white-space: nowrap; flex-shrink: 0;
-    display: none; /* shown only when file loaded */
+    display: none;
   }
   #autosave-badge.saved    { color: var(--green);  border-color: rgba(62,207,142,.3); background: rgba(62,207,142,.08); }
   #autosave-badge.dirty    { color: var(--yellow); border-color: rgba(240,192,64,.3);  background: rgba(240,192,64,.08); }
@@ -241,7 +241,7 @@
   .ts-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
   .ts-btn:disabled { opacity: .3; cursor: not-allowed; }
 
-  /* ── Textarea (高速化のキモ) ── */
+  /* ── Textarea ── */
   .editor-area {
     flex: 1; overflow: hidden; display: flex;
   }
@@ -253,13 +253,11 @@
     font-size: 14px; line-height: 1.75; color: var(--text);
     caret-color: var(--accent);
     padding: 16px 18px;
-    /* ── 高速化: ブラウザの自動補正を全部切る ── */
     -webkit-text-size-adjust: none;
     text-rendering: optimizeSpeed;
-    /* spell/autocorrect は JS でも切る */
     overflow-y: auto;
     overflow-x: hidden;
-    will-change: scroll-position; /* スクロール合成レイヤー化 */
+    will-change: scroll-position;
   }
   textarea#main-editor::selection { background: var(--accent-dim); }
 
@@ -288,7 +286,6 @@
   #draft-banner.hidden { display: none !important; }
   #draft-banner .draft-msg { flex: 1; }
   #draft-banner .draft-time { color: var(--muted); font-size: 10px; }
-
 
   /* ── Startup draft list ── */
   #startup-banner {
@@ -319,15 +316,9 @@
     animation: fadeUp .2s ease;
   }
 
-  .draft-item-icon {
-    font-size: 14px;
-    flex-shrink: 0;
-  }
+  .draft-item-icon { font-size: 14px; flex-shrink: 0; }
 
-  .draft-item-info {
-    flex: 1;
-    min-width: 0;
-  }
+  .draft-item-info { flex: 1; min-width: 0; }
 
   .draft-item-name {
     font-family: var(--mono);
@@ -386,8 +377,7 @@
       </div>
     </div>
     <div class="seek-wrap">
-      <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1"
-             disabled>
+      <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1" disabled>
       <div class="time-row">
         <span id="current-time">00:00</span>
         <span id="total-time">00:00</span>
@@ -397,7 +387,6 @@
 
   <!-- ── Text block ── -->
   <div id="text-block">
-    <!-- ページ起動時の下書き一覧 -->
     <div id="startup-banner"></div>
 
     <div class="text-row">
@@ -406,7 +395,6 @@
       <button class="btn" id="edit-btn" disabled>編集</button>
       <button class="btn" id="save-btn" disabled>保存</button>
     </div>
-    <!-- 下書き復元バナー -->
     <div id="draft-banner" class="hidden">
       <span class="draft-msg">⚡ 未保存の下書きがあります</span>
       <span class="draft-time" id="draft-time"></span>
@@ -440,8 +428,7 @@
         <button class="mini-speed-pill"        data-speed="2.0" >2×</button>
       </div>
     </div>
-    <input type="range" id="mini-seek-bar" min="0" max="100" value="0" step="0.1"
-           disabled>
+    <input type="range" id="mini-seek-bar" min="0" max="100" value="0" step="0.1" disabled>
   </div>
 
   <!-- Toolbar -->
@@ -453,7 +440,7 @@
     <button class="btn" id="font-decrease-btn" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
     <button class="btn" id="font-increase-btn"  style="padding:5px 9px;font-size:13px;line-height:1;">A+</button>
     <button class="btn" id="editor-save-btn" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
-    <button class="btn" style="padding:5px 12px;font-size:12px;"id="editor-close-btn">✕</button>
+    <button class="btn" style="padding:5px 12px;font-size:12px;" id="editor-close-btn">✕</button>
   </div>
 
   <!-- Textarea -->
@@ -475,9 +462,8 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-//  STATE
+//  CONFIG
 // ══════════════════════════════════════════════════════
-// ── GAS API ──────────────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxfrcnxw_antSsrvq7RZ_NaZqX8eHPWH128odFs6OcJy2C6wwFI2ogj2T-D86VNPeB4HQ/exec';
 const IS_IOS = (() => {
   try {
@@ -486,18 +472,21 @@ const IS_IOS = (() => {
   } catch(e) { return false; }
 })();
 
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
 const state = {
   audioLoaded: false,
   textLoaded: false,
   currentSpeed: 1.0,
   seekDragging: false,
-  textFileHandle: null,   // File System Access API handle (PC only)
-  gasMode: false,         // GAS経由で開いたファイル（iPhone用）
-  textContent: '',        // last-saved content (for dirty check)
+  textFileHandle: null,
+  gasMode: false,
+  textContent: '',
   fileName: '',
-  autosaveTimer: null,    // debounce timer
-  draftTimer: null,      // localStorage draft debounce
-  saveStatus: 'saved',   // 'saved' | 'dirty' | 'saving' | 'error'
+  autosaveTimer: null,
+  draftTimer: null,
+  saveStatus: 'saved',
 };
 
 const audio = document.getElementById('audio-el');
@@ -595,7 +584,6 @@ function updateAudioUI() {
 //  TEXT — LOAD
 // ══════════════════════════════════════════════════════
 async function openText() {
-  // iOSの場合はGASファイル選択UIを表示
   if (IS_IOS) { await openTextFromGAS(); return; }
   if (window.showOpenFilePicker) {
     try {
@@ -622,7 +610,11 @@ async function openText() {
 function gasRequest(params) {
   return new Promise((resolve, reject) => {
     const cbName = '_gasCb_' + Date.now();
-    const url = GAS_URL + '?' + Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&') + '&callback=' + cbName;
+    const url = GAS_URL + '?' +
+      Object.entries(params)
+        .map(([k, v]) => k + '=' + encodeURIComponent(v))
+        .join('&') +
+      '&callback=' + cbName;
     const script = document.createElement('script');
     const tid = setTimeout(() => {
       cleanup();
@@ -633,14 +625,8 @@ function gasRequest(params) {
       if (script.parentNode) script.parentNode.removeChild(script);
       clearTimeout(tid);
     }
-    window[cbName] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('スクリプト読込失敗'));
-    };
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('スクリプト読込失敗')); };
     script.src = url;
     document.head.appendChild(script);
   });
@@ -653,7 +639,11 @@ async function openTextFromGAS() {
   try {
     const data = await gasRequest({ action: 'list' });
     if (btn) { btn.disabled = false; btn.textContent = '開く'; }
-    showGASDialog(data.files && data.files.length ? data.files : ['（ファイルなし）'], data.files && data.files.length ? async (f) => loadFromGAS(f) : null);
+    const files = data.files && data.files.length ? data.files : null;
+    showGASDialog(
+      files || ['（ファイルなし）'],
+      files ? (f) => loadFromGAS(f) : null
+    );
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '開く'; }
     alert('GAS接続エラー: ' + e.message);
@@ -665,6 +655,7 @@ async function loadFromGAS(filename) {
   msg.textContent = '読込中…'; msg.className = 'save-msg';
   try {
     const data = await gasRequest({ action: 'read', filename });
+    if (!data.found) throw new Error('ファイルが見つかりません');
     state.gasMode = true;
     state.textFileHandle = null;
     loadTextContent(data.text || '', filename);
@@ -712,11 +703,6 @@ function showGASDialog(files, onSelect) {
 }
 
 function loadTextContent(text, name) {
-  // 新規ファイル（前回と別ファイル）の場合はカーソル位置をリセット
-  if (name !== state.fileName) {
-    // 前のファイルのカーソル位置は保存しない（closeEditor時に保存済みのはず）
-    // 新しいファイルは先頭から（localStorage未登録なら0）
-  }
   state.textContent = text;
   state.fileName = name;
   state.textLoaded = true;
@@ -726,8 +712,6 @@ function loadTextContent(text, name) {
     el.textContent = name; el.classList.add('loaded');
   });
   renderPreview(text);
-
-  // ── 高速化ポイント①: value を直接代入するだけ（DOM操作なし）
   ta.value = text;
 
   ['edit-btn','save-btn','editor-save-btn'].forEach(id =>
@@ -736,34 +720,23 @@ function loadTextContent(text, name) {
   updateCharCount(text);
   setBadge('saved');
   document.getElementById('save-msg').textContent = '';
-
-  // 下書き確認（同名ファイルの localStorage draft があれば復元バナーを出す）
   checkDraftOnLoad(name);
 }
 
 // ══════════════════════════════════════════════════════
 //  TEXT — FAST EDITING
-//
-//  キーストロークのたびに state やプレビューを更新しない。
-//  textarea はブラウザネイティブに任せ、
-//  ① 文字数カウント: 300ms デバウンス（軽量）
-//  ② 自動保存:      5000ms デバウンス（重い処理は後回し）
 // ══════════════════════════════════════════════════════
 let _charCountTimer = null;
 
 ta.addEventListener('input', () => {
-  // ── dirty バッジを即座に表示（= 唯一の即時更新）
   if (state.saveStatus !== 'dirty') setBadge('dirty');
 
-  // ── 文字数カウント: 300ms デバウンス
   clearTimeout(_charCountTimer);
   _charCountTimer = setTimeout(() => updateCharCount(ta.value), 300);
 
-  // ── ローカル下書き: 2秒デバウンス（localStorage は同期・軽量）
   clearTimeout(state.draftTimer);
   state.draftTimer = setTimeout(() => saveDraftLocal(ta.value), 2000);
 
-  // ── ファイル自動保存: 5秒デバウンス（キーを打ち続ける間は延長し続ける）
   scheduleAutosave();
 });
 
@@ -783,16 +756,16 @@ function updateCharCount(text) {
 // ══════════════════════════════════════════════════════
 async function _writeFile(text) {
   if (state.gasMode) {
-    // GAS経由で上書き保存（POST fetch）
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'write', filename: state.fileName, text }),
+    // ✅ JSONP方式で保存（iOSのCORSブロック回避）
+    const data = await gasRequest({
+      action:   'write',
+      filename: state.fileName,
+      text:     text,
     });
-    const data = await res.json();
     if (!data.saved) throw new Error('GAS保存失敗');
     return;
-  } else if (state.textFileHandle) {
+  }
+  if (state.textFileHandle) {
     // File System Access API: 直接上書き（PC Chrome用）
     const w = await state.textFileHandle.createWritable();
     await w.write(text);
@@ -809,14 +782,14 @@ async function _writeFile(text) {
 async function autosave() {
   if (!state.textLoaded || state.saveStatus === 'saving') return;
   const text = ta.value;
-  if (text === state.textContent) { setBadge('saved'); return; } // 変更なし
+  if (text === state.textContent) { setBadge('saved'); return; }
 
   setBadge('saving');
   try {
     await _writeFile(text);
     state.textContent = text;
     renderPreview(text);
-    clearDraftLocal(); // ファイル保存成功 → 下書き削除
+    clearDraftLocal();
     setBadge('saved');
   } catch(e) {
     setBadge('error', '自動保存失敗');
@@ -835,59 +808,42 @@ async function manualSave() {
     await _writeFile(text);
     state.textContent = text;
     renderPreview(text);
-    clearDraftLocal(); // ファイル保存成功 → 下書き削除
+    clearDraftLocal();
     setBadge('saved');
-    // メイン画面のメッセージ
-    const msg = document.getElementById('save-msg');
     msg.textContent = '保存した'; msg.className = 'save-msg';
     setTimeout(() => msg.textContent = '', 2000);
   } catch(e) {
     setBadge('error', '保存失敗: ' + e.message);
+    msg.textContent = '保存失敗: ' + e.message;
+    msg.className = 'save-msg error';
   }
 }
 
-
 // ══════════════════════════════════════════════════════
-//  DRAFT — localStorage 下書き保存（リロード復元用）
-//  キー: vne_draft_{ファイル名}
-//  値:   JSON { text, savedAt }
+//  DRAFT — localStorage
 // ══════════════════════════════════════════════════════
 function draftKey() { return 'vne_draft_' + state.fileName; }
 
 function saveDraftLocal(text) {
   if (!state.textLoaded) return;
   try {
-    localStorage.setItem(draftKey(), JSON.stringify({
-      text,
-      savedAt: Date.now(),
-    }));
-  } catch(e) {
-    // localStorage がいっぱいの場合は無視（容量超過は稀）
-    console.warn('draft save failed:', e);
-  }
+    localStorage.setItem(draftKey(), JSON.stringify({ text, savedAt: Date.now() }));
+  } catch(e) { console.warn('draft save failed:', e); }
 }
 
 function clearDraftLocal() {
   try { localStorage.removeItem(draftKey()); } catch(e) {}
 }
 
-// ファイルを開いたとき、同名の下書きがあるか確認
 function checkDraftOnLoad(name) {
   try {
     const raw = localStorage.getItem('vne_draft_' + name);
     if (!raw) return;
     const draft = JSON.parse(raw);
-    // 本文と同じなら下書き不要（ファイル保存後にリロードした場合など）
     if (draft.text === state.textContent) { localStorage.removeItem('vne_draft_' + name); return; }
-
-    // バナー表示
     const banner = document.getElementById('draft-banner');
-    const timeEl = document.getElementById('draft-time');
-    const ago = fmtAgo(draft.savedAt);
-    timeEl.textContent = ago + '前';
+    document.getElementById('draft-time').textContent = fmtAgo(draft.savedAt) + '前';
     banner.classList.remove('hidden');
-
-    // 下書き内容を一時保持
     state._pendingDraft = draft.text;
   } catch(e) {}
 }
@@ -899,7 +855,6 @@ function restoreDraft() {
   renderPreview(state._pendingDraft);
   setBadge('dirty');
   hideDraftBanner();
-  // 復元後すぐに下書きを再保存（上書き確認）
   saveDraftLocal(state._pendingDraft);
   state._pendingDraft = null;
 }
@@ -914,15 +869,13 @@ function hideDraftBanner() {
   document.getElementById('draft-banner').classList.add('hidden');
 }
 
-// 経過時間を日本語で
 function fmtAgo(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
-  if (s < 60)  return s + '秒';
+  if (s < 60)   return s + '秒';
   if (s < 3600) return Math.floor(s/60) + '分';
   return Math.floor(s/3600) + '時間';
 }
 
-// ── バッジ表示
 function setBadge(status, label) {
   const badge = document.getElementById('autosave-badge');
   if (!state.textLoaded) { badge.style.display = 'none'; return; }
@@ -935,54 +888,36 @@ function setBadge(status, label) {
     error:  '✕ ' + (label || '保存失敗'),
   };
   badge.textContent = labels[status] || status;
-  badge.className = status; // CSS クラスで色分け
+  badge.className = status;
 }
 
-// ── プレビュー更新（エディタ閉じるときのみ更新するので重くない）
 function renderPreview(text) {
   const el = document.getElementById('text-preview');
   if (!text) {
     el.innerHTML = '<span class="preview-empty">テキストファイルを開いてください</span>';
     el.classList.remove('loaded');
   } else {
-    // ── 高速化ポイント②: プレビューはスライスだけ（全文を DOM に入れない）
     el.textContent = text.slice(0, 800) + (text.length > 800 ? '\n…' : '');
     el.classList.add('loaded');
   }
 }
 
 // ══════════════════════════════════════════════════════
-//  自動保存トリガー — バックグラウンド / タブ離脱 / 終了
+//  自動保存トリガー
 // ══════════════════════════════════════════════════════
-
-// ① バックグラウンド移行（タブを切り替えたとき）
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && state.textLoaded) {
     clearTimeout(state.autosaveTimer);
-    autosave(); // 即時保存
+    autosave();
   }
 });
 
-// ② タブ/ウィンドウを閉じる直前
-//    File System Access API があればサイレントに保存
-//    なければ「変更があります」ダイアログ
 window.addEventListener('beforeunload', e => {
   if (!state.textLoaded) return;
-  const current = ta.value;
-  if (current === state.textContent) return; // 変更なし
-
-  if (state.textFileHandle) {
-    // 非同期だが beforeunload では間に合わないことがある。
-    // sendBeacon か同期的な workaround はないため、
-    // ここでは Blob を使った最終トライのみ行う。
-    autosave();
-    // ブラウザに「本当に閉じますか？」ダイアログを出させる
-    e.preventDefault();
-    e.returnValue = '保存されていない変更があります。本当に閉じますか？';
-  } else {
-    e.preventDefault();
-    e.returnValue = '保存されていない変更があります。本当に閉じますか？';
-  }
+  if (ta.value === state.textContent) return;
+  if (state.textFileHandle) autosave();
+  e.preventDefault();
+  e.returnValue = '保存されていない変更があります。本当に閉じますか？';
 });
 
 // ══════════════════════════════════════════════════════
@@ -994,14 +929,12 @@ function openEditor() {
   if (!state.textLoaded) return;
   document.getElementById('editor-screen').classList.add('open');
   setBadge(state.saveStatus);
-  // カーソル位置を復元
   const posKey = 'cursorPos:' + state.fileName;
   const savedPos = parseInt(localStorage.getItem(posKey) || '0', 10);
   const pos = Math.min(savedPos, ta.value.length);
   ta.focus();
   requestAnimationFrame(() => {
     ta.setSelectionRange(pos, pos);
-    // カーソル位置が見えるようにスクロール
     const lineHeight = parseFloat(getComputedStyle(ta).lineHeight);
     const lines = ta.value.substring(0, pos).split('\n').length;
     ta.scrollTop = Math.max(0, (lines - 3) * lineHeight);
@@ -1017,13 +950,11 @@ function changeFontSize(delta) {
 }
 
 function closeEditor() {
-  // カーソル位置を保存
   if (state.fileName) {
     localStorage.setItem('cursorPos:' + state.fileName, ta.selectionStart);
   }
-  // プレビュー更新（スライスのみ = 高速）
   renderPreview(ta.value);
-  state.textContent = ta.value; // dirty チェック用に同期
+  state.textContent = ta.value;
   document.getElementById('editor-screen').classList.remove('open');
 }
 
@@ -1032,11 +963,7 @@ function closeEditor() {
 // ══════════════════════════════════════════════════════
 function insertTimestamp() {
   if (!state.audioLoaded) return;
-  const pos = ta.selectionStart;
-  const ins = `[${fmt(audio.currentTime)}]`;
-  // ── 高速化ポイント④: execCommand は deprecated だが
-  //    Undo スタックを壊さず挿入できる唯一の方法
-  //    （将来は editContext API へ）
+  const ins = '[' + fmt(audio.currentTime) + ']';
   ta.focus();
   document.execCommand('insertText', false, ins);
 }
@@ -1046,18 +973,13 @@ function insertTimestamp() {
 // ══════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   const inEd = document.getElementById('editor-screen').classList.contains('open');
-  if ((e.metaKey||e.ctrlKey) && e.key === 's') {
-    e.preventDefault(); manualSave();
-  }
-  if ((e.metaKey||e.ctrlKey) && e.key === ' ') {
-    e.preventDefault(); togglePlay();
-  }
+  if ((e.metaKey||e.ctrlKey) && e.key === 's') { e.preventDefault(); manualSave(); }
+  if ((e.metaKey||e.ctrlKey) && e.key === ' ') { e.preventDefault(); togglePlay(); }
   if (e.key === 'Escape' && inEd) closeEditor();
 });
 
-
 // ══════════════════════════════════════════════════════
-//  起動時: localStorage の下書きをスキャンして表示
+//  起動時: localStorageの下書きをスキャン
 // ══════════════════════════════════════════════════════
 function scanDraftsOnStartup() {
   const drafts = [];
@@ -1074,8 +996,6 @@ function scanDraftsOnStartup() {
   } catch(e) { return; }
 
   if (drafts.length === 0) return;
-
-  // 新しい順にソート
   drafts.sort((a, b) => b.savedAt - a.savedAt);
 
   const banner = document.getElementById('startup-banner');
@@ -1112,10 +1032,7 @@ function restoreFromStartup(key) {
     if (!raw) return;
     const d = JSON.parse(raw);
     const name = key.replace('vne_draft_', '');
-
-    // ファイルなしで下書きを読み込む
-    // （保存はダウンロードになるが、編集・確認は可能）
-    state.textContent = '';      // ファイル未保存なので差分は全体
+    state.textContent = '';
     state.fileName = name;
     state.textLoaded = true;
     state.textFileHandle = null;
@@ -1133,11 +1050,7 @@ function restoreFromStartup(key) {
     ['edit-btn','save-btn','editor-save-btn'].forEach(id =>
       document.getElementById(id).disabled = false);
     setBadge('dirty');
-
-    // スタートアップバナーを隠す
     document.getElementById('startup-banner').classList.remove('visible');
-
-    // エディタを開く
     openEditor();
   } catch(e) { console.error(e); }
 }
@@ -1146,7 +1059,6 @@ function deleteFromStartup(key, btn) {
   try { localStorage.removeItem(key); } catch(e) {}
   const item = btn.closest('.draft-item');
   if (item) item.remove();
-  // 残りがなければバナーを隠す
   const banner = document.getElementById('startup-banner');
   if (banner.querySelectorAll('.draft-item').length === 0) {
     banner.classList.remove('visible');
@@ -1157,10 +1069,11 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ページ読み込み時に実行
+// ══════════════════════════════════════════════════════
+//  DOMContentLoaded — イベント登録
+// ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   scanDraftsOnStartup();
-  // ── ボタンイベント登録（CSP対策）
   const evMap = {
     'open-audio-btn':    () => openAudio(),
     'skip-back-btn':     () => skipAudio(-10),
@@ -1188,9 +1101,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-speed]').forEach(el => {
     el.addEventListener('click', () => setSpeed(parseFloat(el.dataset.speed)));
   });
+  const seekBar = document.getElementById('seek-bar');
+  if (seekBar) {
+    seekBar.addEventListener('input',  () => onSeekInput(seekBar.value));
+    seekBar.addEventListener('change', () => onSeekChange(seekBar.value));
+  }
   const miniSeek = document.getElementById('mini-seek-bar');
   if (miniSeek) {
-    miniSeek.addEventListener('input', () => onSeekInput(miniSeek.value));
+    miniSeek.addEventListener('input',  () => onSeekInput(miniSeek.value));
     miniSeek.addEventListener('change', () => onSeekChange(miniSeek.value));
   }
 });
@@ -1200,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════════════
 function fmt(s) {
   if (!isFinite(s)) return '00:00';
-  return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
 }
 </script>
 </body>
