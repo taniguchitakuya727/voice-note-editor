@@ -453,6 +453,7 @@
     <button class="btn" id="font-decrease-btn" style="padding:5px 9px;font-size:13px;line-height:1;">A-</button>
     <button class="btn" id="font-increase-btn"  style="padding:5px 9px;font-size:13px;line-height:1;">A+</button>
     <button class="btn" id="editor-save-btn" style="padding:5px 12px;font-size:12px;" disabled>保存</button>
+    <button class="btn btn-accent" id="editor-save-recheck-btn" style="padding:5px 12px;font-size:12px;" disabled>再チェック完了</button>
     <button class="btn" style="padding:5px 12px;font-size:12px;"id="editor-close-btn">✕</button>
   </div>
 
@@ -730,7 +731,7 @@ function loadTextContent(text, name) {
   // ── 高速化ポイント①: value を直接代入するだけ（DOM操作なし）
   ta.value = text;
 
-  ['edit-btn','save-btn','editor-save-btn'].forEach(id =>
+  ['edit-btn','save-btn','editor-save-btn','editor-save-recheck-btn'].forEach(id =>
     document.getElementById(id).disabled = false);
 
   updateCharCount(text);
@@ -781,6 +782,32 @@ function updateCharCount(text) {
 // ══════════════════════════════════════════════════════
 //  SAVE — CORE
 // ══════════════════════════════════════════════════════
+function recheckFileName(name) {
+  if (!name) return 'output_recheck.txt';
+  if (name.endsWith('_recheck.txt')) return name;
+  if (name.endsWith('_checked.txt')) return name.replace(/_checked\.txt$/, '_recheck.txt');
+  if (name.endsWith('.txt')) return name.replace(/\.txt$/, '_recheck.txt');
+  return name + '_recheck.txt';
+}
+
+async function _writeFileAs(text, filename) {
+  if (state.gasMode) {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'write', filename, text }),
+    });
+    const data = await res.json();
+    if (!data.saved) throw new Error('GAS保存失敗');
+    return;
+  }
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = filename;
+  a.click();
+}
+
 async function _writeFile(text) {
   if (state.gasMode) {
     // GAS経由で上書き保存（POST fetch）
@@ -821,6 +848,35 @@ async function autosave() {
   } catch(e) {
     setBadge('error', '自動保存失敗');
     console.error('autosave error:', e);
+  }
+}
+
+async function saveAsRecheck() {
+  if (!state.textLoaded) return;
+  const filename = recheckFileName(state.fileName);
+  if (!confirm(filename + ' として保存します。よろしいですか？')) return;
+
+  clearTimeout(state.autosaveTimer);
+  const text = ta.value;
+  setBadge('saving');
+  const msg = document.getElementById('save-msg');
+  msg.textContent = '再チェック完了として保存中…'; msg.className = 'save-msg';
+
+  try {
+    await _writeFileAs(text, filename);
+    state.fileName = filename;
+    state.textContent = text;
+    renderPreview(text);
+    clearDraftLocal();
+    ['text-filename','editor-filename'].forEach(id => {
+      const el = document.getElementById(id);
+      el.textContent = filename; el.classList.add('loaded');
+    });
+    setBadge('saved');
+    msg.textContent = '再チェック完了として保存した'; msg.className = 'save-msg';
+    setTimeout(() => msg.textContent = '', 2500);
+  } catch(e) {
+    setBadge('error', '保存失敗: ' + e.message);
   }
 }
 
@@ -1173,6 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'edit-btn':          () => openEditor(),
     'save-btn':          () => manualSave(),
     'editor-save-btn':   () => manualSave(),
+    'editor-save-recheck-btn': () => saveAsRecheck(),
     'ts-insert-btn':     () => insertTimestamp(),
     'font-decrease-btn': () => changeFontSize(-1),
     'font-increase-btn': () => changeFontSize(1),
